@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GPS Admin • Theo dõi Thời gian Thực</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap');
+         :root {
+            --bg: #0a0f1c;
+            --sidebar: #111827;
+            --card: #161f2e;
+            --card2: #1e2937;
+            --text: #e2e8f0;
+            --text-light: #94a3b8;
+            --accent: #6366f1;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --border: rgba(148, 163, 184, 0.15);
+        }
+        
+        body.light {
+            --bg: #f8fafc;
+            --sidebar: #f1f5f9;
+            --card: #ffffff;
+            --card2: #f8fafc;
+            --text: #1e2937;
+            --text-light: #64748b;
+            --accent: #4f46e5;
+            --border: rgba(148, 163, 184, 0.2);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+        }
+        
+        .sidebar {
+            width: 260px;
+            background: var(--sidebar);
+            padding: 24px 16px;
+            height: 100vh;
+            position: fixed;
+            border-right: 1px solid var(--border);
+        }
+        
+        .logo {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #6366f1, #a855f7);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 40px;
+            padding-left: 12px;
+        }
+        
+        .nav-item {
+            padding: 14px 20px;
+            border-radius: 14px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        
+        .nav-item:hover,
+        .nav-item.active {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--accent);
+        }
+        
+        .main-content {
+            margin-left: 260px;
+            flex: 1;
+            padding: 30px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 18px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: var(--card);
+            padding: 24px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .map-container {
+            background: var(--card);
+            padding: 14px;
+            border-radius: 24px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+            margin-bottom: 30px;
+        }
+        
+        #map {
+            height: 480px;
+            border-radius: 18px;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .search-bar {
+            flex: 1;
+            min-width: 300px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            padding: 15px 22px;
+            border-radius: 16px;
+            font-size: 1.05rem;
+        }
+        
+        table {
+            width: 100%;
+            background: var(--card);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+        }
+        
+        th,
+        td {
+            padding: 16px 18px;
+            text-align: left;
+        }
+        
+        th {
+            background: var(--card2);
+            font-weight: 600;
+            color: var(--text-light);
+        }
+        
+        tr:hover {
+            background: rgba(99, 102, 241, 0.08);
+        }
+        
+        button {
+            padding: 12px 24px;
+            border-radius: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, var(--accent), #818cf8);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--success);
+            color: white;
+            padding: 16px 28px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            z-index: 3000;
+            opacity: 0;
+            transition: all 0.4s;
+        }
+        
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 4000;
+        }
+        
+        .modal-content {
+            background: var(--card);
+            padding: 32px;
+            border-radius: 24px;
+            max-width: 440px;
+            width: 90%;
+        }
+        
+        .theme-toggle {
+            position: fixed;
+            top: 25px;
+            right: 280px;
+            width: 48px;
+            height: 48px;
+            background: var(--card);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            z-index: 100;
+        }
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+</head>
+
+<body>
+
+    <div class="sidebar">
+        <div class="logo">GPS Admin</div>
+        <div class="nav-item active"><span>📊</span> Tổng quan</div>
+    </div>
+
+    <div class="theme-toggle" onclick="toggleTheme()">🌙</div>
+
+    <div class="main-content">
+        <div id="loginScreen" style="max-width:420px;margin:140px auto;">
+            <div style="background:var(--card);padding:50px 40px;border-radius:28px;box-shadow:0 30px 60px rgba(0,0,0,0.4);">
+                <h2 style="text-align:center;margin-bottom:30px;font-size:1.9rem;">🔐 Admin Access</h2>
+                <input type="password" id="passwordInput" placeholder="Nhập mật khẩu" style="width:100%;padding:18px;border-radius:16px;background:var(--card2);border:1px solid var(--border);margin-bottom:20px;font-size:1.1rem;">
+                <button onclick="checkPassword()" class="btn-primary" style="width:100%;padding:18px;font-size:1.15rem;">Đăng nhập</button>
+            </div>
+        </div>
+
+        <div id="mainPanel" style="display:none;">
+            <div class="header">
+                <h1 style="font-size:2.3rem;font-weight:700;">Theo dõi Vị trí GPS</h1>
+                <div>
+                    <button class="btn-primary" onclick="loadData()">🔄 Làm mới</button>
+                    <button onclick="toggleAutoRefresh()" id="autoBtn" style="margin-left:10px;">⏰ Auto Refresh: OFF</button>
+                </div>
+            </div>
+
+            <div class="stats">
+                <div class="stat-card">
+                    <div id="total" style="font-size:2.6rem;font-weight:700;color:var(--accent);">0</div>
+                    <div>Tổng vị trí</div>
+                </div>
+                <div class="stat-card">
+                    <div id="today" style="font-size:2.6rem;font-weight:700;color:var(--success);">0</div>
+                    <div>Hôm nay</div>
+                </div>
+                <div class="stat-card">
+                    <div id="sourceSummary" style="font-size:1rem; line-height:1.4; opacity:0.9;">—</div>
+                    <div>Nguồn dữ liệu</div>
+                </div>
+                <div class="stat-card">
+                    <div id="latest" style="font-size:1.4rem;">—</div>
+                    <div>Cập nhật cuối</div>
+                </div>
+            </div>
+
+            <div class="map-container">
+                <div id="map"></div>
+            </div>
+
+            <div class="controls">
+                <input type="text" id="searchInput" class="search-bar" placeholder="🔍 Tìm kiếm địa chỉ, thời gian..." onkeyup="filterData()">
+                <button class="btn-primary" onclick="toggleRoutePath()" id="routeBtn">Ẩn tuyến đường</button>
+                <button class="btn-primary" onclick="toggleHeatmap()" id="heatBtn">Hiển thị Heatmap</button>
+                <button class="btn-primary" onclick="exportCSV()">📥 Xuất CSV</button>
+                <button class="btn-danger" onclick="clearAllData()">🗑️ Xóa tất cả</button>
+            </div>
+
+            <table id="locationTable">
+                <thead>
+                    <tr>
+                        <th>Thời gian</th>
+                        <th>Tọa độ</th>
+                        <th>Địa chỉ</th>
+                        <th>Nguồn</th>
+                        <th>Tốc độ</th>
+                        <th>Chính xác</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <h3 style="color:var(--danger);">Xác nhận xóa?</h3>
+            <p id="modalText" style="margin:20px 0;color:var(--text-light);"></p>
+            <div style="display:flex;gap:15px;justify-content:flex-end;">
+                <button onclick="closeModal()" style="padding:12px 28px;background:#475569;color:white;border:none;border-radius:12px;">Hủy</button>
+                <button onclick="confirmDelete()" style="padding:12px 28px;background:var(--danger);color:white;border:none;border-radius:12px;">Xóa</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script>
+        const ADMIN_PASSWORD = "admin123";
+        let map, markerCluster, polyline, heatLayer, allData = [],
+            autoRefreshInterval = null,
+            isAutoRefresh = false,
+            routeVisible = true,
+            heatVisible = false;
+        let modalConfirmCallback = null;
+
+        function showToast(msg, color = '#22c55e') {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.style.background = color;
+            toast.style.opacity = 1;
+            setTimeout(() => toast.style.opacity = 0, 2800);
+        }
+
+        function checkPassword() {
+            if (document.getElementById('passwordInput').value === ADMIN_PASSWORD) {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainPanel').style.display = 'block';
+                loadData();
+            } else alert("❌ Mật khẩu sai!");
+        }
+
+        function toggleTheme() {
+            const isLight = !document.body.classList.contains('light');
+            document.body.classList.toggle('light', isLight);
+            document.querySelector('.theme-toggle').textContent = isLight ? '☀️' : '🌙';
+            localStorage.setItem('admin_theme', isLight ? 'light' : 'dark');
+        }
+
+        function initMap() {
+            if (map) return;
+            map = L.map('map').setView([16.0, 106.0], 6);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            markerCluster = L.markerClusterGroup();
+            map.addLayer(markerCluster);
+        }
+
+        function loadLocalLocations() {
+            try {
+                const raw = localStorage.getItem('gps_locations');
+                return raw ? JSON.parse(raw) : [];
+            } catch (e) {
+                console.log('Không đọc dữ liệu từ bộ nhớ', e);
+                return [];
+            }
+        }
+
+        async function loadData() {
+            initMap();
+            markerCluster.clearLayers();
+            if (polyline) map.removeLayer(polyline);
+
+            try {
+                const res = await fetch('/api/locations');
+                if (res.ok) {
+                    allData = await res.json();
+                } else {
+                    throw new Error('API trả về lỗi');
+                }
+            } catch (e) {
+                console.warn('Không kết nối được server, tải dữ liệu cục bộ');
+                allData = loadLocalLocations();
+            }
+
+            allData.sort((a, b) => new Date(b.time) - new Date(a.time));
+
+            document.getElementById('total').textContent = allData.length;
+            const todayCount = allData.filter(d => d.time && d.time.includes(new Date().toLocaleDateString('vi-VN'))).length;
+            const gpsCount = allData.filter(d => d.source === 'gps').length;
+            const ipCount = allData.filter(d => d.source === 'ip').length;
+            document.getElementById('today').textContent = todayCount;
+            document.getElementById('latest').textContent = allData[0] ? allData[0].time : '—';
+            document.getElementById('sourceSummary').textContent = `GPS: ${gpsCount} | IP: ${ipCount}`;
+
+            renderTable(allData);
+            renderMapWithPath(allData);
+        }
+
+        function renderMapWithPath(data) {
+            const coords = [];
+            if (polyline) {
+                map.removeLayer(polyline);
+                polyline = null;
+            }
+            if (heatLayer) {
+                map.removeLayer(heatLayer);
+                heatLayer = null;
+            }
+            data.forEach(loc => {
+                L.marker([loc.lat, loc.lng])
+                    .bindPopup(`<b>${loc.address}</b><br>${loc.time}`)
+                    .addTo(markerCluster);
+                coords.push([loc.lat, loc.lng]);
+            });
+            if (coords.length > 1 && routeVisible) {
+                polyline = L.polyline(coords, {
+                    color: '#6366f1',
+                    weight: 5,
+                    opacity: 0.85
+                }).addTo(map);
+            }
+            if (heatVisible) {
+                createHeatmap(data);
+            }
+            if (data.length > 0) map.fitBounds(L.featureGroup([markerCluster]).getBounds().pad(0.2));
+        }
+
+        function renderTable(data) {
+            const tbody = document.querySelector('#locationTable tbody');
+            tbody.innerHTML = '';
+            data.forEach(loc => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${loc.time || ''}</td>
+                    <td style="font-family:monospace;">${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}</td>
+                    <td>${loc.address || 'Không có'}</td>
+                    <td>${loc.source ? (loc.source === 'gps' ? 'GPS' : loc.source === 'ip' ? 'IP' : loc.source) : '—'}</td>
+                    <td>${loc.speed ? loc.speed + ' km/h' : '—'}</td>
+                    <td>${loc.accuracy ? loc.accuracy + ' m' : '—'}</td>
+                    <td><button onclick="viewOnGoogleMaps(${loc.lat},${loc.lng})">🗺️</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function filterData() {
+            const term = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allData.filter(loc =>
+                (loc.address && loc.address.toLowerCase().includes(term)) ||
+                (loc.time && loc.time.toLowerCase().includes(term))
+            );
+            renderTable(filtered);
+        }
+
+        function viewOnGoogleMaps(lat, lng) {
+            window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+        }
+
+        function openModal(message, callback) {
+            const modal = document.getElementById('confirmModal');
+            document.getElementById('modalText').textContent = message;
+            modal.style.display = 'flex';
+            modalConfirmCallback = callback;
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('confirmModal');
+            modal.style.display = 'none';
+            modalConfirmCallback = null;
+        }
+
+        function confirmDelete() {
+            if (typeof modalConfirmCallback === 'function') {
+                modalConfirmCallback();
+            }
+            closeModal();
+        }
+
+        function exportCSV() {
+            if (!allData.length) return showToast('Không có dữ liệu để xuất.', '#ef4444');
+            const rows = [
+                ['Thời gian', 'Tọa độ', 'Địa chỉ', 'Nguồn', 'Tốc độ', 'Chính xác']
+            ];
+            allData.forEach(loc => {
+                rows.push([
+                    loc.time || '',
+                    `${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}`,
+                    loc.address || '',
+                    loc.source || '',
+                    loc.speed ? `${loc.speed} km/h` : '',
+                    loc.accuracy ? `${loc.accuracy} m` : ''
+                ]);
+            });
+            const csv = rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+            const blob = new Blob([csv], {
+                type: 'text/csv;charset=utf-8;'
+            });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `location_history_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('Đã xuất CSV thành công.');
+        }
+
+        function clearLocalLocations() {
+            try {
+                localStorage.removeItem('gps_locations');
+            } catch (e) {
+                console.log('Không xóa được dữ liệu cục bộ', e);
+            }
+        }
+
+        async function clearAllData() {
+            openModal('Bạn chắc chắn muốn xóa TẤT CẢ dữ liệu?', async() => {
+                let deleted = false;
+                try {
+                    const res = await fetch('/api/locations', {
+                        method: 'DELETE'
+                    });
+                    deleted = res.ok;
+                } catch (e) {
+                    console.warn('Không xóa được trên server, xóa cục bộ');
+                }
+                if (!deleted) clearLocalLocations();
+                loadData();
+                showToast('Đã xóa tất cả dữ liệu!', '#ef4444');
+            });
+        }
+
+        function toggleAutoRefresh() {
+            isAutoRefresh = !isAutoRefresh;
+            const btn = document.getElementById('autoBtn');
+            if (isAutoRefresh) {
+                autoRefreshInterval = setInterval(loadData, 10000);
+                btn.textContent = "⏰ Auto Refresh: ON";
+            } else {
+                clearInterval(autoRefreshInterval);
+                btn.textContent = "⏰ Auto Refresh: OFF";
+            }
+        }
+
+        window.onload = () => {
+            const savedTheme = localStorage.getItem('admin_theme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light');
+                document.querySelector('.theme-toggle').textContent = '☀️';
+            }
+        };
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vị Trí Của Bạn - GPS Thời Gian Thực</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+         :root {
+            --bg: #0a0f1c;
+            --card: #161f2e;
+            --accent: #3b82f6;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --text: #e2e8f0;
+            --text-light: #94a3b8;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0a0f1c 0%, #1e2937 100%);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 30px 20px 20px;
+        }
+        
+        .header h1 {
+            font-size: clamp(1.8rem, 5vw, 2.4rem);
+            font-weight: 700;
+            background: linear-gradient(90deg, #60a5fa, #a5b4fc);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .container {
+            max-width: 100%;
+            padding: 0 15px 30px;
+        }
+        
+        .card {
+            background: var(--card);
+            border-radius: 28px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .map-container {
+            height: clamp(320px, 55vh, 460px);
+            position: relative;
+        }
+        
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        
+        .info-section {
+            padding: 24px;
+        }
+        
+        .status {
+            padding: 16px 20px;
+            border-radius: 20px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .success {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+            border: 1px solid #22c55e;
+        }
+        
+        .watching {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+            border: 1px solid #3b82f6;
+            animation: pulse 2s infinite;
+        }
+        
+        .error {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+        }
+        
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1
+            }
+            50% {
+                opacity: 0.7
+            }
+        }
+        
+        .info-item {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        
+        .icon {
+            font-size: 2.6rem;
+            width: 60px;
+            flex-shrink: 0;
+            text-align: center;
+        }
+        
+        .info-content h3 {
+            color: var(--text-light);
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+        
+        .info-content p {
+            font-size: 1.18rem;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+        
+        .history-card {
+            margin-top: 24px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(148, 163, 184, 0.12);
+            border-radius: 24px;
+            padding: 20px;
+        }
+        
+        .history-card h3 {
+            margin: 0;
+            font-size: 1rem;
+            color: var(--text-light);
+            letter-spacing: 0.02em;
+        }
+        
+        .history-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .history-actions button {
+            background: rgba(59, 130, 246, 0.12);
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            padding: 10px 16px;
+            border-radius: 999px;
+            font-size: 0.95rem;
+            min-width: unset;
+        }
+        
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+        
+        .history-table th,
+        .history-table td {
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+        }
+        
+        .history-table th {
+            color: var(--text-light);
+            font-weight: 600;
+        }
+        
+        .history-empty {
+            color: var(--text-light);
+            opacity: 0.85;
+            font-size: 0.98rem;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 0 24px 28px;
+        }
+        
+        button {
+            flex: 1;
+            min-width: 140px;
+            padding: 16px 20px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #22c55e;
+            color: white;
+            padding: 14px 26px;
+            border-radius: 50px;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            z-index: 10001;
+            opacity: 0;
+            transition: all 0.4s;
+            display: none;
+            white-space: nowrap;
+        }
+        
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 15, 28, 0.97);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px 15px;
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>🌍 Vị Trí Của Bạn</h1>
+        <p style="opacity:0.85; margin-top:8px;">Vị trí gần đúng qua IP • Không yêu cầu phép trình duyệt</p>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <div class="map-container">
+                <div id="map"></div>
+            </div>
+
+            <div class="info-section">
+                <div class="status" id="status">🔄 Đang xác định vị trí...</div>
+                <div id="info"></div>
+                <div class="history-card">
+                    <div class="history-actions">
+                        <h3>Lịch sử vị trí</h3>
+                        <div>
+                            <button onclick="exportHistoryCSV()">Xuất CSV</button>
+                            <button onclick="clearHistory()">Xóa lịch sử</button>
+                        </div>
+                    </div>
+                    <div id="history" class="history-empty">Đang chờ vị trí...</div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button onclick="getCurrentLocation()" class="btn-primary">🔄 Cập nhật vị trí IP</button>
+                <button onclick="toggleWatch()" id="watchBtn" class="btn-primary">📍 Bật theo dõi IP</button>
+                <button onclick="shareLocation()" class="btn-primary" style="background:#10b981;">📤 Chia sẻ vị trí</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <div class="footer">Dữ liệu được lưu trên Server • Hỗ trợ mọi thiết bị</div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        let map, marker, watchId = null,
+            ipWatchInterval = null,
+            routeLine = null;
+        let isWatching = false;
+        let currentLat = 16.0,
+            currentLng = 106.0;
+        let locationSource = 'unknown';
+
+        function saveLastLocation(lat, lng, source) {
+            localStorage.setItem('lastLocation', JSON.stringify({
+                lat,
+                lng,
+                source,
+                timestamp: Date.now()
+            }));
+        }
+
+        function loadLastLocation() {
+            try {
+                const raw = localStorage.getItem('lastLocation');
+                if (!raw) return null;
+                const data = JSON.parse(raw);
+                if (data && data.lat && data.lng) return data;
+            } catch (e) {
+                console.log('Không đọc được vị trí lưu', e);
+            }
+            return null;
+        }
+
+        function setStatus(text, style = 'success') {
+            const statusEl = document.getElementById('status');
+            statusEl.className = `status ${style}`;
+            statusEl.innerHTML = text;
+        }
+
+        function renderLocationInfo(lat, lng, accuracy, speed, source) {
+            const precisionLabel = source === 'ip' ? 'Khoảng' : 'Chính xác';
+            const speedText = speed !== null ? (speed * 3.6).toFixed(1) + ' km/h' : 'Đang dừng';
+            const sourceName = source === 'gps' ? 'GPS' : source === 'ip' ? 'IP gần đúng' : 'Bộ nhớ cache';
+            const note = source === 'ip' ? '<p style="margin-top:0.5rem; opacity:0.85;">Vị trí này là gần đúng, dựa trên địa chỉ IP.</p>' : '';
+            document.getElementById('info').innerHTML = `
+                    <div class="status ${source === 'gps' ? 'success' : 'watching'}">${source === 'gps' ? '✅ Vị trí GPS' : '📡 Vị trí IP gần đúng'}</div>
+                    <div class="info-item"><div class="icon">📍</div><div class="info-content"><h3>Tọa độ</h3><p>${lat.toFixed(6)}, ${lng.toFixed(6)}</p></div></div>
+                    <div class="info-item"><div class="icon">🎯</div><div class="info-content"><h3>${precisionLabel}</h3><p>${accuracy ? accuracy.toFixed(0) + ' mét' : 'Không có'}</p></div></div>
+                    <div class="info-item"><div class="icon">🏎️</div><div class="info-content"><h3>Tốc độ</h3><p>${speedText}</p></div></div>
+                    <div class="info-item"><div class="icon">📡</div><div class="info-content"><h3>Nguồn vị trí</h3><p>${sourceName}</p>${note}</div></div>
+                `;
+        }
+
+        function initMap(lat = 16.0, lng = 106.0) {
+            if (map) {
+                map.setView([lat, lng], 18);
+                if (marker) marker.setLatLng([lat, lng]);
+                return;
+            }
+            map = L.map('map', {
+                zoomControl: true,
+                attributionControl: false
+            }).setView([lat, lng], 17);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(map);
+            marker = L.marker([lat, lng]).addTo(map).bindPopup('<b>Vị trí hiện tại</b>').openPopup();
+        }
+
+        async function getAddress(lat, lng) {
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+                    headers: {
+                        'User-Agent': 'ViTriApp/3.0'
+                    }
+                });
+                const data = await res.json();
+                return data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            } catch (e) {
+                return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.background = type === 'success' ? '#22c55e' : '#ef4444';
+            toast.style.display = 'block';
+            toast.style.opacity = '1';
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.style.display = 'none', 400);
+            }, 2800);
+        }
+
+        // ==================== HÀM QUAN TRỌNG - ĐÃ SỬA CHO RENDER ====================
+        function storeLocalLocation(entry) {
+            try {
+                const raw = localStorage.getItem('gps_locations');
+                const list = raw ? JSON.parse(raw) : [];
+                list.unshift(entry);
+                localStorage.setItem('gps_locations', JSON.stringify(list.slice(0, 200)));
+            } catch (e) {
+                console.log('Không lưu được vị trí vào bộ nhớ', e);
+            }
+        }
+
+        function getStoredLocations() {
+            try {
+                const raw = localStorage.getItem('gps_locations');
+                return raw ? JSON.parse(raw) : [];
+            } catch (e) {
+                console.log('Không đọc được vị trí lưu', e);
+                return [];
+            }
+        }
+
+        function renderLocationHistory() {
+            const list = getStoredLocations().slice(0, 8);
+            const historyEl = document.getElementById('history');
+            if (!list.length) {
+                historyEl.className = 'history-empty';
+                historyEl.innerHTML = 'Chưa có lịch sử vị trí.';
+                if (routeLine) {
+                    map.removeLayer(routeLine);
+                    routeLine = null;
+                }
+                return;
+            }
+            historyEl.className = '';
+            historyEl.innerHTML = `
+                <table class="history-table">
+                    <thead>
+                        <tr><th>Thời gian</th><th>Vị trí</th><th>Nguồn</th></tr>
+                    </thead>
+                    <tbody>
+                        ${list.map(entry => `
+                            <tr>
+                                <td>${entry.time}</td>
+                                <td style="font-family:monospace;">${entry.lat.toFixed(6)}, ${entry.lng.toFixed(6)}</td>
+                                <td>${entry.source === 'gps' ? 'GPS' : entry.source === 'ip' ? 'IP' : entry.source}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function renderRouteHistory() {
+            if (!map) return;
+            if (routeLine) {
+                map.removeLayer(routeLine);
+                routeLine = null;
+            }
+            const history = getStoredLocations().slice().reverse();
+            const coords = history.map(item => [item.lat, item.lng]);
+            if (coords.length > 1) {
+                routeLine = L.polyline(coords, {
+                    color: '#38bdf8',
+                    weight: 4,
+                    opacity: 0.75,
+                    dashArray: '8 6'
+                }).addTo(map);
+            }
+        }
+
+        function clearHistory() {
+            localStorage.removeItem('gps_locations');
+            renderLocationHistory();
+            setStatus('✅ Đã xóa lịch sử vị trí', 'success');
+        }
+
+        function sendToServer(lat, lng, address, accuracy, speed, source = 'gps') {
+            const entry = {
+                lat,
+                lng,
+                address,
+                accuracy,
+                speed,
+                source,
+                time: new Date().toLocaleString('vi-VN')
+            };
+            storeLocalLocation(entry);
+            renderLocationHistory();
+            fetch('/api/location', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(entry)
+            }).then(response => {
+                if (response.ok) console.log('✅ Đã gửi vị trí lên server thành công');
+                else console.log('⚠️ Server trả về lỗi, lưu cục bộ');
+            }).catch(() => {
+                console.log('❌ Không gửi được lên server (có thể đang offline), đã lưu cục bộ');
+            });
+        }
+
+        function exportHistoryCSV() {
+            const list = getStoredLocations();
+            if (!list.length) return showToast('Không có lịch sử để xuất.', 'error');
+            const rows = [
+                ['Thời gian', 'Tọa độ', 'Nguồn', 'Địa chỉ', 'Chính xác']
+            ];
+            list.forEach(entry => {
+                rows.push([
+                    entry.time || '',
+                    `${entry.lat.toFixed(6)}, ${entry.lng.toFixed(6)}`,
+                    entry.source === 'gps' ? 'GPS' : entry.source === 'ip' ? 'IP' : entry.source,
+                    entry.address || '',
+                    entry.accuracy ? `${entry.accuracy} m` : ''
+                ]);
+            });
+            const csv = rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `location_history_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('Đã xuất lịch sử thành công.');
+        }
+
+        function showPosition(position, isWatch = false, source = 'gps') {
+            const {
+                latitude: lat,
+                longitude: lng,
+                accuracy,
+                speed
+            } = position.coords;
+            currentLat = lat;
+            currentLng = lng;
+            locationSource = source;
+
+            initMap(lat, lng);
+            saveLastLocation(lat, lng, source);
+
+            if (isWatch) {
+                setStatus('📍 Đang theo dõi vị trí IP', 'watching');
+            } else if (source === 'ip') {
+                setStatus('📡 Vị trí gần đúng từ IP', 'watching');
+            } else {
+                setStatus('✅ Vị trí đã được xác định', 'success');
+            }
+
+            getAddress(lat, lng).then(addr => {
+                renderLocationInfo(lat, lng, accuracy, speed, source);
+                marker.setPopupContent(`<b>Vị trí của bạn</b><br>${addr}<br>Chính xác: ${accuracy ? accuracy.toFixed(0) + 'm' : 'Không xác định'}`).openPopup();
+                sendToServer(lat, lng, addr, accuracy, speed, source);
+                renderLocationHistory();
+                renderRouteHistory();
+                showToast(isWatch ? 'Vị trí đã được cập nhật (theo dõi)' : 'Vị trí đã được lấy thành công!');
+            });
+        }
+
+        function showError(error) {
+            let msg = 'Không lấy được vị trí.';
+            if (error.code === error.PERMISSION_DENIED) {
+                msg = 'Bạn đã từ chối quyền vị trí. Đang sử dụng vị trí gần đúng từ IP.';
+                getIPLocation();
+            } else if (error.code === error.TIMEOUT) {
+                msg = 'Lấy vị trí GPS quá thời gian. Chuyển sang IP.';
+                getIPLocation();
+            } else if (error.code === error.POSITION_UNAVAILABLE) {
+                msg = 'GPS không xác định được vị trí. Thử dùng IP.';
+                getIPLocation();
+            }
+            setStatus(`❌ ${msg}`, 'error');
+            showToast(msg, 'error');
+        }
+
+        async function getIPLocation() {
+            const services = ['https://ipapi.co/json/', 'https://ipwho.is/json/'];
+            for (const url of services) {
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    const lat = data.latitude || data.lat;
+                    const lng = data.longitude || data.lon || data.long;
+                    if (lat && lng) {
+                        const fallbackPosition = {
+                            coords: {
+                                latitude: Number(lat),
+                                longitude: Number(lng),
+                                accuracy: 5000,
+                                speed: null
+                            }
+                        };
+                        showPosition(fallbackPosition, false, 'ip');
+                        showToast('Đã lấy vị trí gần đúng từ IP, không cần quyền vị trí.');
+                        return;
+                    }
+                } catch (e) {
+                    console.log(`Lỗi khi lấy vị trí từ ${url}`, e);
+                }
+            }
+            setStatus('❌ Không thể xác định vị trí qua IP.', 'error');
+        }
+
+        async function getCurrentLocation() {
+            setStatus('🔄 Đang lấy vị trí gần đúng từ IP...');
+            await getIPLocation();
+        }
+
+        function toggleWatch() {
+            const btn = document.getElementById('watchBtn');
+            if (isWatching) {
+                clearInterval(ipWatchInterval);
+                ipWatchInterval = null;
+                isWatching = false;
+                btn.innerHTML = `📍 Bật theo dõi liên tục`;
+                btn.classList.remove('btn-danger');
+                btn.classList.add('btn-primary');
+                showToast('Đã dừng theo dõi vị trí');
+            } else {
+                getIPLocation();
+                ipWatchInterval = setInterval(getIPLocation, 15000);
+                isWatching = true;
+                btn.innerHTML = `⏹ Dừng theo dõi`;
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-danger');
+                showToast('Đã bật theo dõi vị trí IP liên tục');
+            }
+        }
+
+        function shareLocation() {
+            if (!currentLat || !currentLng) return showToast('Chưa có vị trí để chia sẻ!', 'error');
+            const text = `Vị trí của tôi:\n${currentLat.toFixed(6)}, ${currentLng.toFixed(6)}\nhttps://www.google.com/maps?q=${currentLat},${currentLng}`;
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Chia sẻ vị trí',
+                    text
+                }).catch(() => copyToClipboard(text));
+            } else {
+                copyToClipboard(text);
+            }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => showToast('Đã sao chép vị trí!'));
+        }
+
+        async function autoLocate() {
+            const cached = loadLastLocation();
+            if (cached) {
+                const cachedPosition = {
+                    coords: {
+                        latitude: cached.lat,
+                        longitude: cached.lng,
+                        accuracy: cached.source === 'ip' ? 5000 : 100,
+                        speed: null
+                    }
+                };
+                showPosition(cachedPosition, false, cached.source === 'ip' ? 'ip' : 'gps');
+                renderRouteHistory();
+                showToast('Đã tải vị trí lần trước từ bộ nhớ.', 'success');
+            }
+            await getIPLocation();
+        }
+
+        window.onload = () => {
+            initMap();
+            autoLocate();
+        };
+    </script>
+</body>
+
+</html>
